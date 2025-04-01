@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from app.config import Confg
+from app.config import Config
 
 db = SQLAlchemy()
 
@@ -11,7 +11,7 @@ def create_app():
 
     db.init_app(app)
 
-    from app.views.import main
+    from app.views import main
     app.register_blueprint(main)
 
     return app
