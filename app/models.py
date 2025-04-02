@@ -10,4 +10,5 @@ class Vacancy(db.Model):
     schedule_type = db.Column(db.String(255))
     salary_from = db.Column(db.Integer,)
     salary_to = db.Column(db.Integer,)
+    currency = db.Column(db.String(20))
     url = db.Column(db.String)
