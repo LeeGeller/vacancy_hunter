@@ -1,10 +1,25 @@
-import os
+from pydantic_settings import BaseSettings
+from  pathlib import Path
 
-from dotenv import load_dotenv
 
-load_dotenv()
+class Settings(BaseSettings):
+    DB_HOST: str
+    DB_PORT: int
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_NAME: str
+    SECRET_KEY: str
 
-class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', 'your_secret_key')
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    @property
+    def SQLALCHEMY_DATABASE_URI(self):
+        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+    class Config:
+        env_file = Path.parent
+
+#
+# settings = Settings()
+
+a = Path.parent.
+
+print(a)
