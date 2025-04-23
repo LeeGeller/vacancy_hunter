@@ -2,7 +2,7 @@ import re
 from functools import wraps
 
 
-def clean_salary_from_habr(func):
+def clean_salary(func):
     """
     Decorator to process and extract salary details from a list of job vacancies fetched
     via the decorated asynchronous function. The salary range is extracted from the
