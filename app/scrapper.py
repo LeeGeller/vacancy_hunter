@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+import aiohttp
+from bs4 import BeautifulSoup
 
 
 class AbstractParsingVacancy(ABC):
@@ -14,13 +16,36 @@ class AbstractParsingVacancy(ABC):
     @abstractmethod
     def build_url_and_headers(self):
         """
-        Prepare url and query_params for parsing
-        :return: query_url and query_params
+        A method that must be implemented by subclasses to construct the necessary
+        URL and headers for a specific purpose. This is a required part of objects
+        subclassing this abstract class and must return a combination of URL and
+        headers formatted as defined.
+
+        The implementation details depend on the specific use case of the subclass,
+        and this function defines the contract that ensures consistent behavior
+        and expected structure for generating URLs and headers.
+
+        :raises NotImplementedError: This method must be implemented by the subclass
+            and cannot be invoked from the base abstract class.
+
+        :return: A combination of a constructed URL and relevant headers
+        :rtype: None
         """
         pass
 
     @abstractmethod
     def pars_vacancies(self):
+        """
+        An abstract method that serves as a contract for subclasses to implement
+        the functionality for parsing vacancies. This method must be overridden
+        in any non-abstract subclass.
+
+        The `pars_vacancies` method is intended to encapsulate all necessary
+        logic for extracting and processing vacancy data, adhering to the specific
+        requirements of the subclass implementation.
+
+        :raises NotImplementedError: If the method is not implemented in a subclass.
+        """
         pass
 
 
@@ -39,13 +64,15 @@ class HHParsingVacancy(AbstractParsingVacancy):
             "per_page": self.page_limit,
         }
 
-    # def pars_vacancies(self):
-    #     vacancies_response = []
-    #     async with session.get(url, params=keys_response) as response:
-    #         if response.status == 200:
-    #             return await response.json()  # Возвращаем данные, если запрос успешен
-    #         else:
-    #             print(f"Failed to retrieve vacancies from {url}. Status code: {response.status}")
+    async def pars_vacancies(self):
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.query_url, params=self.query_params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    self.vacancies = data.get('items', [])
+                else:
+                    print(f"Failed to retrieve vacancies from {self.query_url}. Status code: {response.status}")
 
 
 class HabrParsingVacancy(AbstractParsingVacancy):
@@ -60,3 +87,26 @@ class HabrParsingVacancy(AbstractParsingVacancy):
         self.query_params = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
+
+    async def pars_vacancies(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.query_url, headers=self.query_params) as response:
+                if response.status == 200:
+                    soup = BeautifulSoup(await response.text(), "html.parser")
+                    items = soup.find_all("div", class_="vacancy-card__inner")
+                    for item in items:
+                        title_elem = item.find("a", class_="vacancy-card__title-link")
+                        link = "https://career.habr.com" + title_elem['href'] if title_elem else "No link"
+
+                        self.vacancies.append({
+                            "Вакансия": title_elem.text.strip() if title_elem else "No title",
+                            "Компания": item.find("a", class_="vacancy-card__company-title").text.strip(),
+                            "Локация": item.find("span", class_="link-comp--appearance-dark").text.strip(),
+                            "Описание": item.find("div", class_="vacancy-card__description").text.strip(),
+                            "Ссылка": link,
+                            "Зарплата": item.find("div", class_="basic-salary").text.strip() if item.find("div",
+                                                                                                          class_="basic-salary") else "Не указана",
+                            "Опыт работы": "На хабре не указано"
+                        })
+                else:
+                    print(f"Failed Habr with status: {response.status}")
