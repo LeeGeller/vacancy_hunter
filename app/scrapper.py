@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 import aiohttp
 from bs4 import BeautifulSoup
 
+from app.servicies import clean_salary_from_habr
+
 
 class AbstractParsingVacancy(ABC):
     def __init__(self, query_vacancies: str, area: int, page_limit: int):
@@ -70,7 +72,7 @@ class HHParsingVacancy(AbstractParsingVacancy):
             async with session.get(self.query_url, params=self.query_params) as response:
                 if response.status == 200:
                     data = await response.json()
-                    self.vacancies = data.get('items', [])
+                    self.vacancies: list[dict] = data.get('items', [])
                 else:
                     print(f"Failed to retrieve vacancies from {self.query_url}. Status code: {response.status}")
 
@@ -83,11 +85,12 @@ class HabrParsingVacancy(AbstractParsingVacancy):
         self.build_url_and_headers()
 
     def build_url_and_headers(self):
-        self.query_url = "https://career.habr.com/vacancies?q=" + self.query_vacancies
-        self.query_params = {
+        self.query_url:str = "https://career.habr.com/vacancies?q=" + self.query_vacancies
+        self.query_params: dict = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
 
+    @clean_salary_from_habr
     async def pars_vacancies(self):
         async with aiohttp.ClientSession() as session:
             async with session.get(self.query_url, headers=self.query_params) as response:
@@ -105,7 +108,7 @@ class HabrParsingVacancy(AbstractParsingVacancy):
                             "Описание": item.find("div", class_="vacancy-card__description").text.strip(),
                             "Ссылка": link,
                             "Зарплата": item.find("div", class_="basic-salary").text.strip() if item.find("div",
-                                                                                                          class_="basic-salary") else "Не указана",
+                                                                                                          class_="basic-salary") else None,
                             "Опыт работы": "На хабре не указано"
                         })
                 else:
