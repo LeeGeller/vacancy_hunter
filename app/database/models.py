@@ -1,14 +1,16 @@
-from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Column, Integer, String, Text
+from app.database.engine import Base
 
-db = SQLAlchemy()
 
-class Vacancy(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255), nullable=False)
-    city = db.Column(db.String(255),)
-    description = db.Column(db.Text,)
-    schedule_type = db.Column(db.String(255))
-    salary_from = db.Column(db.Integer,)
-    salary_to = db.Column(db.Integer,)
-    currency = db.Column(db.String(20))
-    url = db.Column(db.String)
+class Vacancy(Base):
+    __tablename__ = "vacancies"
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String(255), nullable=False)
+    city = Column(String(255))
+    description = Column(Text)
+    work_format = Column(String(255))
+    salary_from = Column(Integer)
+    salary_to = Column(Integer)
+    currency = Column(String(20))
+    url = Column(String)
