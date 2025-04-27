@@ -14,7 +14,7 @@ class AbstractParsingVacancy(ABC):
         self.vacancies: list[dict] = []
 
     def __repr__(self):
-        return f'Vacancy for: {self.query_vacancies}'
+        return f"Vacancy for: {self.query_vacancies}"
 
     @abstractmethod
     def build_url_and_headers(self):
@@ -55,7 +55,7 @@ class AbstractParsingVacancy(ABC):
 class HHParsingVacancy(AbstractParsingVacancy):
     def __init__(self, query_vacancies: str, area: int, page_limit: int):
         super().__init__(query_vacancies, area, page_limit)
-        self.query_url: str = ''
+        self.query_url: str = ""
         self.query_params: dict = {}
         self.build_url_and_headers()
 
@@ -70,41 +70,52 @@ class HHParsingVacancy(AbstractParsingVacancy):
     async def pars_vacancies(self):
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(self.query_url, params=self.query_params) as response:
+            async with session.get(
+                    self.query_url, params=self.query_params
+            ) as response:
                 if response.status == 200:
                     data = await response.json()
-                    vacancies_list: list[dict] = data.get('items', [])
+                    vacancies_list: list[dict] = data.get("items", [])
                     for vacancy in vacancies_list:
-                        salary = vacancy.get('salary', {})
-                        salary_from = salary.get('from', 0)
-                        salary_to = salary.get('to', 0)
+                        salary = vacancy.get("salary", {})
+                        salary_from = salary.get("from", 0)
+                        salary_to = salary.get("to", 0)
 
                         self.vacancies.append(
                             {
-                                'Вакансия': vacancy.get('name', 'No title'),
-                                'Компания': vacancy.get('employer', {}).get('name', None),
-                                'Локация': vacancy.get('area', {}).get('name', None),
-                                'Описание': vacancy.get('snippet', {}).get('responsibility',
-                                                                           None),
-                                'Ссылка': vacancy.get('alternate_url', None),
-                                'Опыт работы': vacancy.get('experience', {}).get('name',
-                                                                                 None),
-                                'Зарплата от': salary_from,
-                                'Зарплата до': salary_to,
+                                "Вакансия": vacancy.get("name", "No title"),
+                                "Компания": vacancy.get("employer", {}).get(
+                                    "name", None
+                                ),
+                                "Локация": vacancy.get("area", {}).get("name", None),
+                                "Описание": vacancy.get("snippet", {}).get(
+                                    "responsibility", None
+                                ),
+                                "Ссылка": vacancy.get("alternate_url", None),
+                                "Опыт работы": vacancy.get("experience", {}).get(
+                                    "name", None
+                                ),
+                                "Зарплата от": salary_from,
+                                "Зарплата до": salary_to,
                             }
                         )
                     else:
-                        print(f"Failed to retrieve vacancies from {self.query_url}. Status code: {response.status}")
+                        print(
+                            f"Failed to retrieve vacancies from {self.query_url}. Status code: {response.status}"
+                        )
+
 
 class HabrParsingVacancy(AbstractParsingVacancy):
     def __init__(self, query_vacancies: str, area: int, page_limit: int):
         super().__init__(query_vacancies, area, page_limit)
-        self.query_url: str = ''
+        self.query_url: str = ""
         self.query_params: dict = {}
         self.build_url_and_headers()
 
     def build_url_and_headers(self):
-        self.query_url: str = "https://career.habr.com/vacancies?q=" + self.query_vacancies
+        self.query_url: str = (
+                "https://career.habr.com/vacancies?q=" + self.query_vacancies
+        )
         self.query_params: dict = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
@@ -112,29 +123,65 @@ class HabrParsingVacancy(AbstractParsingVacancy):
     @clean_salary
     async def pars_vacancies(self):
         async with aiohttp.ClientSession() as session:
-            async with session.get(self.query_url, headers=self.query_params) as response:
+            async with session.get(
+                    self.query_url, headers=self.query_params
+            ) as response:
                 if response.status == 200:
                     soup = BeautifulSoup(await response.text(), "html.parser")
                     items = soup.find_all("div", class_="vacancy-card__inner")
                     for item in items:
                         title_elem = item.find("a", class_="vacancy-card__title-link")
-                        link = "https://career.habr.com" + title_elem['href'] if title_elem else "No link"
+                        link = (
+                            "https://career.habr.com" + title_elem["href"]
+                            if title_elem
+                            else "No link"
+                        )
 
-                        self.vacancies.append({
-                            "Вакансия": title_elem.text.strip() if title_elem else "No title",
-                            "Компания": item.find("a", class_="vacancy-card__company-title").text.strip(),
-                            "Локация": item.find("span", class_="link-comp--appearance-dark").text.strip(),
-                            "Описание": item.find("div", class_="vacancy-card__description").text.strip(),
-                            "Ссылка": link,
-                            "Зарплата": item.find("div", class_="basic-salary").text.strip() if item.find("div",
-                                                                                                          class_="basic-salary") else None,
-                            "Опыт работы": "На хабре не указано"
-                        })
+                        self.vacancies.append(
+                            {
+                                "Вакансия": (
+                                    title_elem.text.strip()
+                                    if title_elem
+                                    else "No title"
+                                ),
+                                "Компания": item.find(
+                                    "a", class_="vacancy-card__company-title"
+                                ).text.strip(),
+                                "Локация": item.find(
+                                    "span", class_="link-comp--appearance-dark"
+                                ).text.strip(),
+                                "Описание": item.find(
+                                    "div", class_="vacancy-card__description"
+                                ).text.strip(),
+                                "Ссылка": link,
+                                "Зарплата": (
+                                    item.find("div", class_="basic-salary").text.strip()
+                                    if item.find("div", class_="basic-salary")
+                                    else None
+                                ),
+                                "Опыт работы": "На хабре не указано",
+                            }
+                        )
                 else:
                     print(f"Failed Habr with status: {response.status}")
 
 
-async def pars_fabric(site: str, query_vacancies="Python-developer, python backend", area=113, page_limit=50):
+async def pars_fabric(
+        query_vacancies: str = "Python-developer, python backend",
+        area: int = 113,
+        page_limit: int = 50,
+) -> dict[dict]:
+    """
+    Asynchronous factory for launching vacancy parsers from multiple websites.
+
+    Creates class instances for each platform, starts them asynchronously,
+    and collects the results into a dictionary.
+
+    :param query_vacancies: String containing keywords for vacancy search.
+    :param area: Region ID for the vacancy search.
+    :param page_limit: Maximum number of pages to parse.
+    :return: A dictionary where keys are site names and values are lists of vacancies represented as dictionaries.
+    """
     hh_vacancies = HHParsingVacancy(query_vacancies, area, page_limit)
     habr_vacancies = HabrParsingVacancy(query_vacancies, area, page_limit)
 
@@ -148,13 +195,9 @@ async def pars_fabric(site: str, query_vacancies="Python-developer, python backe
     except Exception as e:
         print(f"Error parsing Habr vacancies: {e}")
 
-    all_vacancies = {
-        'HH': hh_vacancies.vacancies,
-        'Habr': habr_vacancies.vacancies
-    }
+    all_vacancies = {"HH": hh_vacancies.vacancies, "Habr": habr_vacancies.vacancies}
 
-    return all_vacancies.get(site.upper())
-
-print(asyncio.run(pars_fabric('HH')))
+    return all_vacancies.items()
 
 
+print(asyncio.run(pars_fabric()))
