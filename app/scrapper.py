@@ -2,7 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 import aiohttp
 from bs4 import BeautifulSoup
-
+from typing import Dict, List
 from app.servicies import clean_salary
 
 
@@ -170,7 +170,7 @@ async def pars_fabric(
         query_vacancies: str = "Python-developer, python backend",
         area: int = 113,
         page_limit: int = 50,
-) -> dict_items[str, list[dict]]:
+) -> Dict[str, List[dict]]:
     """
     Asynchronous factory for launching vacancy parsers from multiple websites.
 
@@ -197,7 +197,7 @@ async def pars_fabric(
 
     all_vacancies = {"HH": hh_vacancies.vacancies, "Habr": habr_vacancies.vacancies}
 
-    return all_vacancies.items()
+    return all_vacancies
 
 
 print(asyncio.run(pars_fabric()))
