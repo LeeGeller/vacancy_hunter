@@ -170,7 +170,7 @@ async def pars_fabric(
         query_vacancies: str = "Python-developer, python backend",
         area: int = 113,
         page_limit: int = 50,
-) -> dict[dict]:
+) -> dict_items[str, list[dict]]:
     """
     Asynchronous factory for launching vacancy parsers from multiple websites.
 
