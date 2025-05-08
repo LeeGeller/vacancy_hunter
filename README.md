@@ -37,7 +37,7 @@
 - [Redis](https://redis.io/) — брокер задач для Celery.
 - [PostgreSQL](https://www.postgresql.org/) — реляционная база данных для хранения вакансий.
 - [Docker](https://www.docker.com/) — контейнеризация проекта.
-- [python-dotenv](https://saurabh-kumar.com/python-dotenv/) — работа с переменными окружения.
+- [Pydantic](https://pydantic-docs.helpmanual.io/) — для работы с конфигурациями и переменными окружения.
 - [pytest](https://docs.pytest.org/) — тестирование компонентов проекта *(в планах)*.
 - [GitHub Actions](https://docs.github.com/en/actions) — настройка CI/CD *(в планах)*.
 
