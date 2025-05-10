@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from database.config import settings
+from app.database.config import settings
 
 db = SQLAlchemy()
 
