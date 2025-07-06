@@ -1,10 +1,8 @@
 import asyncio
-import re
 from abc import ABC, abstractmethod
 import aiohttp
 from bs4 import BeautifulSoup
-from typing import Dict, List
-from app.servicies import clean_salary, make_vacancy, clean_vacancies_list
+from app.servicies import clean_salary, clean_vacancies_list
 import urllib.parse
 
 
