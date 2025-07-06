@@ -1,8 +1,11 @@
+import asyncio
+import re
 from abc import ABC, abstractmethod
 import aiohttp
 from bs4 import BeautifulSoup
-
-from app.servicies import clean_salary
+from typing import Dict, List
+from app.servicies import clean_salary, make_vacancy, clean_vacancies_list
+import urllib.parse
 
 
 class AbstractParsingVacancy(ABC):
@@ -11,9 +14,12 @@ class AbstractParsingVacancy(ABC):
         self.area: int = area
         self.page_limit: int = page_limit
         self.vacancies: list[dict] = []
+        self.query_url = ""
+        self.query_params = {}
 
+    @property
     def __repr__(self):
-        return f'Vacancy for: {self.query_vacancies}'
+        return f"Vacancy for: {self.query_vacancies}"
 
     @abstractmethod
     def build_url_and_headers(self):
@@ -34,8 +40,7 @@ class AbstractParsingVacancy(ABC):
         """
         pass
 
-    @abstractmethod
-    def pars_vacancies(self):
+    async def pars_vacancies(self):
         """
         An abstract method that serves as a contract for subclasses to implement
         the functionality for parsing vacancies. This method must be overridden
@@ -47,14 +52,27 @@ class AbstractParsingVacancy(ABC):
 
         :raises NotImplementedError: If the method is not implemented in a subclass.
         """
-        pass
+        async with aiohttp.ClientSession() as session:
+            limit = 0
+            while limit < self.page_limit:
+                async with session.get(
+                    self.query_url, params=self.query_params
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        self.vacancies.extend(data.get("items", []))
+                        limit += 1
+                        await asyncio.sleep(2)
+                    else:
+                        print(
+                            f"Failed to retrieve vacancies from {self.query_url}. Status code: {response.status}"
+                        )
+                        break
 
 
 class HHParsingVacancy(AbstractParsingVacancy):
     def __init__(self, query_vacancies: str, area: int, page_limit: int):
         super().__init__(query_vacancies, area, page_limit)
-        self.query_url: str = ''
-        self.query_params: dict = {}
         self.build_url_and_headers()
 
     def build_url_and_headers(self):
@@ -66,9 +84,30 @@ class HHParsingVacancy(AbstractParsingVacancy):
         }
 
     async def pars_vacancies(self):
+        await self.pars_vacancies()
+        clean_vacancies = clean_vacancies_list(self.vacancies)
+        self.vacancies = clean_vacancies
 
+
+class HabrParsingVacancy(AbstractParsingVacancy):
+    def __init__(self, query_vacancies: str, area: int, page_limit: int):
+        super().__init__(query_vacancies, area, page_limit)
+        self.build_url_and_headers()
+
+    def build_url_and_headers(self):
+        self.query_vacancies = "".join(urllib.parse.quote(self.query_vacancies))
+        self.query_url: str = (
+            "https://career.habr.com/vacancies?q=" + self.query_vacancies
+        )
+        self.query_params: dict = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+
+    async def pars_vacancies(self):
         async with aiohttp.ClientSession() as session:
-            async with session.get(self.query_url, params=self.query_params) as response:
+            async with session.get(
+                self.query_url, headers=self.query_params
+            ) as response:
                 if response.status == 200:
                     data = await response.json()
                     vacancies_list: list[dict] = data.get('items', [])
@@ -126,5 +165,4 @@ class HHParsingVacancy(AbstractParsingVacancy):
                             }
                         else:
                             print(f"Failed Habr with status: {response.status}")
-
 
