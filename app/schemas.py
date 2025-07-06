@@ -1,4 +1,4 @@
-from pydentic import BaseModel
+from pydantic import BaseModel
 
 
 class VacancySerialized(BaseModel):
