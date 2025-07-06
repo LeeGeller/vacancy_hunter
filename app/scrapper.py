@@ -18,7 +18,7 @@ class AbstractParsingVacancy(ABC):
     @abstractmethod
     def build_url_and_headers(self):
         """
-        A method that must be implemented by subclasses to construct the necessary
+        A method that subclasses must implement to construct the necessary
         URL and headers for a specific purpose. This is a required part of objects
         subclassing this abstract class and must return a combination of URL and
         headers formatted as defined.
@@ -31,7 +31,6 @@ class AbstractParsingVacancy(ABC):
             and cannot be invoked from the base abstract class.
 
         :return: A combination of a constructed URL and relevant headers
-        :rtype: None
         """
         pass
 
@@ -78,20 +77,16 @@ class HHParsingVacancy(AbstractParsingVacancy):
                         salary_from = salary.get('from', 0)
                         salary_to = salary.get('to', 0)
 
-                        self.vacancies.append(
-                            {
-                                'Вакансия': vacancy.get('name', 'No title'),
-                                'Компания': vacancy.get('employer', {}).get('name', None),
-                                'Локация': vacancy.get('area', {}).get('name', None),
-                                'Описание': vacancy.get('snippet', {}).get('responsibility',
-                                                                           None),
-                                'Ссылка': vacancy.get('alternate_url', None),
-                                'Опыт работы': vacancy.get('experience', {}).get('name',
-                                                                                 None),
-                                'Зарплата от': salary_from,
-                                'Зарплата до': salary_to,
-                            }
-                        )
+                        yield {
+                            'Вакансия': vacancy.get('name', 'No title'),
+                            'Компания': vacancy.get('employer', {}).get('name', None),
+                            'Локация': vacancy.get('area', {}).get('name', None),
+                            'Описание': vacancy.get('snippet', {}).get('responsibility', None),
+                            'Ссылка': vacancy.get('alternate_url', None),
+                            'Опыт работы': vacancy.get('experience', {}).get('name', None),
+                            'Зарплата от': salary_from,
+                            'Зарплата до': salary_to,
+                        }
                     else:
                         print(f"Failed to retrieve vacancies from {self.query_url}. Status code: {response.status}")
 
@@ -119,7 +114,7 @@ class HHParsingVacancy(AbstractParsingVacancy):
                             title_elem = item.find("a", class_="vacancy-card__title-link")
                             link = "https://career.habr.com" + title_elem['href'] if title_elem else "No link"
 
-                            self.vacancies.append({
+                            yield {
                                 "Вакансия": title_elem.text.strip() if title_elem else "No title",
                                 "Компания": item.find("a", class_="vacancy-card__company-title").text.strip(),
                                 "Локация": item.find("span", class_="link-comp--appearance-dark").text.strip(),
@@ -128,6 +123,8 @@ class HHParsingVacancy(AbstractParsingVacancy):
                                 "Зарплата": item.find("div", class_="basic-salary").text.strip() if item.find("div",
                                                                                                               class_="basic-salary") else None,
                                 "Опыт работы": "На хабре не указано"
-                            })
-                    else:
-                        print(f"Failed Habr with status: {response.status}")
+                            }
+                        else:
+                            print(f"Failed Habr with status: {response.status}")
+
+
