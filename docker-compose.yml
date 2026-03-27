@@ -1,3 +1,9 @@
+networks:
+  vacancy_hunter:
+    external: true
+    name: vacancy_hunter
+    driver: bridge
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -11,13 +17,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - vacancyhunter
+      - vacancy_hunter
     env_file:
       - .env
-
-networks:
-  vacancyhunter:
-    driver: bridge
 
 volumes:
   postgres_data:
