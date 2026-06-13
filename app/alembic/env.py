@@ -1,29 +1,31 @@
 from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from pathlib import Path
 
 from alembic import context
 from dotenv import load_dotenv
+from sqlalchemy import engine_from_config, pool
 
-from pathlib import Path
+from app.database.base import Base
+from app.settings import DATABASE_URL
 
+PATH_DIR = Path(__file__).parent
+PROJECT_ROOT = PATH_DIR.parent.parent
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-pat_dir = Path(__file__).parent
-project_root = pat_dir.parent.parent
-load_dotenv(project_root / '.env')
+load_dotenv(PROJECT_ROOT / '.env')
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
+config.set_main_option("sqlalchemy.url", DATABASE_URL)
 fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
